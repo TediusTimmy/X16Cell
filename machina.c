@@ -89,7 +89,16 @@ void platformColors (byte pair)
 
 byte platformGetch (void)
  {
-   return getch();
+      // I just noticed that I never call refresh in the main UpdateScreen loop.
+      // It gets called implicitly here, because the window has been modified. The more you know.
+      // I don't particularly like this, but I don't want to add another phony function to waste
+      // RAM on the CX16.
+   int ch = getch();
+   if (KEY_BACKSPACE == ch)
+    {
+      ch = '\b';
+    }
+   return ch;
  }
 
 void platformPutch (byte ch)
