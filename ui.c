@@ -37,12 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NUM_ROWS 100U
 #define NUM_COLS  20U
 
-#if 'z' > 'Z'
-   #define MAX_CHAR 'z'
-#else
-   #define MAX_CHAR 'Z'
-#endif
-
 static byte c_col;
 static byte c_row;
 static byte tr_col;
@@ -311,7 +305,12 @@ byte interpretCommand (byte command)
    if (1 == inputMode)
     {
       string = getCellString(c_col, c_row);
-      if ((' ' <= command) && (MAX_CHAR >= command))
+      if (((' ' <= command) && (']' >= command)) ||
+#if 'z' > 'Z'
+          (('a' <= command) && ('z' >= command)))
+#else
+          (('A' <= command) && ('Z' >= command)))
+#endif
        {
          if (inLoc != 120U)
           {
@@ -385,6 +384,7 @@ byte interpretCommand (byte command)
       break;
    case 'W':
    case 'w':
+   case 145:
       if (0U != c_row)
        {
          --c_row;
@@ -393,6 +393,7 @@ byte interpretCommand (byte command)
       break;
    case 'S':
    case 's':
+   case 17:
       if ((NUM_ROWS - 1U) != c_row)
        {
          ++c_row;
@@ -401,6 +402,7 @@ byte interpretCommand (byte command)
       break;
    case 'A':
    case 'a':
+   case 157:
       if (0U != c_col)
        {
          --c_col;
@@ -409,6 +411,7 @@ byte interpretCommand (byte command)
       break;
    case 'D':
    case 'd':
+   case 29:
       if ((NUM_COLS - 1U) != c_col)
        {
          ++c_col;

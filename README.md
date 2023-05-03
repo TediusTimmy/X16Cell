@@ -24,7 +24,7 @@ The formula evaluation engine has two stacks: one for data and one for operation
 Commands
 --------
 
-* `WASD` - Navigate the sheet
+* `WASD` - Navigate the sheet (also the arrow keys, as soon as I recompile it)
 * `z` - Go to cell A0
 * `[` - Decrease the size of the current column
 * `]` - Increase the size of the current column

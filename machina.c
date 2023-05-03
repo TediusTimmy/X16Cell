@@ -94,9 +94,23 @@ byte platformGetch (void)
       // I don't particularly like this, but I don't want to add another phony function to waste
       // RAM on the CX16.
    int ch = getch();
-   if (KEY_BACKSPACE == ch)
+   switch (ch)
     {
+   case KEY_BACKSPACE:
       ch = '\b';
+      break;
+   case KEY_UP:
+      ch = 145;
+      break;
+   case KEY_DOWN:
+      ch = 17;
+      break;
+   case KEY_LEFT:
+      ch = 157;
+      break;
+   case KEY_RIGHT:
+      ch = 29;
+      break;
     }
    return ch;
  }
@@ -158,7 +172,26 @@ void platformColors (byte pair)
 
 byte platformGetch (void)
  {
-   return getch();
+   int ch = getch();
+   if ((0 == ch) || (224 == ch))
+    {
+      switch (getch())
+       {
+      case 72:
+         ch = 145;
+         break;
+      case 80:
+         ch = 17;
+         break;
+      case 75:
+         ch = 157;
+         break;
+      case 77:
+         ch = 29;
+         break;
+       }
+    }
+   return ch;
  }
 
 void platformPutch (byte ch)
@@ -206,6 +239,8 @@ char* getStore(byte indexInCurrentPage)
 
 void platformInitializeScreen (void)
  {
+      // This is graphically glitchy, but I rather it is on.
+   cursor(1U);
  }
 
 void platformScreensize (byte* x, byte* y)
