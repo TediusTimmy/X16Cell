@@ -53,7 +53,7 @@ static byte useComma;
 
 static char tempFloat [15];
 static char working [128];
-static byte inLoc;
+static byte lChar, inLoc, totLen;
 
 static void setComma(char* str)
  {
@@ -160,12 +160,13 @@ void updateScreen (void)
    platformColors(COLOR_NORMAL);
    if (CELL_UNUSED != cell->use)
     {
-      strcpy(working, getCellString(c_col, c_row));
+      strcpy(working, getCellString(c_col, c_row) + lChar);
       mx = strlen(working);
-      if (mx > x - 5U) memcpy(working, working + mx - x + 5U, x + 6U);
-      mx = strlen(working);
+      if (mx > x) working[x] = '\0';
       platformPuts(working);
+      mx = strlen(working);
       for (q = x - mx - 1U; q != (byte)(0U - 1U); --q) platformPutch(' ');
+      mx = inLoc - lChar;
     }
    else
     {
@@ -306,6 +307,8 @@ byte interpretCommand (byte command)
  {
    byte x, y, c, mx, mc, t;
 
+   platformScreensize(&x, &y);
+
    if (1 == inputMode)
     {
       string = getCellString(c_col, c_row);
@@ -316,30 +319,93 @@ byte interpretCommand (byte command)
           (('A' <= command) && ('Z' >= command)))
 #endif
        {
-         if (inLoc != 120U)
+         if (totLen != 120U)
           {
-            string[inLoc] = command;
-            ++inLoc;
-            string[inLoc] = '\0';
+            if (inLoc == totLen)
+             {
+               string[inLoc] = command;
+               ++inLoc;
+               string[inLoc] = '\0';
+               ++totLen;
+
+               if (inLoc > (x - 5U + lChar))
+                {
+                  ++lChar;
+                }
+             }
+            else
+             {
+             }
           }
        }
       else if (('\b' == command) || (0177 == command))
        {
-         if (0U != inLoc)
+         if (inLoc == totLen)
           {
-            --inLoc;
+            if (0U != inLoc)
+             {
+               --inLoc;
+               --totLen;
+
+               if ((inLoc + lChar) > totLen)
+                {
+                  --lChar;
+                }
+             }
+            string[inLoc] = '\0';
           }
-         string[inLoc] = '\0';
+         else
+          {
+          }
        }
       else if ((command == '\n') || (command == '\r'))
        {
          inputMode = 0;
          recalculate(c_major, top_down, left_right);
        }
+      else if (command == 157)
+       {
+         if (0U != inLoc)
+          {
+            --inLoc;
+
+            if ((inLoc == (lChar + 5U)) && (0U != lChar))
+             {
+               --lChar;
+             }
+          }
+       }
+      else if (command == 29)
+       {
+         if (inLoc != totLen)
+          {
+            ++inLoc;
+
+            if (inLoc > (x - 5U + lChar))
+             {
+               ++lChar;
+             }
+          }
+       }
+      else if (command == 19)
+       {
+         inLoc = 0U;
+         lChar = 0U;
+       }
+      else if (command == 148)
+       {
+         inLoc = totLen;
+         if (inLoc > (x - 5U))
+          {
+            lChar = inLoc - x + 5U;
+          }
+         else
+          {
+            lChar = 0U;
+          }
+       }
       return 0;
     }
-
-   platformScreensize(&x, &y);
 
    c = tr_col;
    mx = 2U;
@@ -366,14 +432,18 @@ byte interpretCommand (byte command)
    case '"':
       cell->use = CELL_USE_LABEL;
       *getCellString(c_col, c_row) = '\0';
+      lChar = 0;
       inLoc = 0;
+      totLen = 0;
       inputMode = 1;
       break;
    case '=':
    case '+':
       cell->use = CELL_USE_VALUE;
       *getCellString(c_col, c_row) = '\0';
+      lChar = 0;
       inLoc = 0;
+      totLen = 0;
       inputMode = 1;
       memset(cell->prev, '\0', 6);
       cell->prev[0] = 0x80;
@@ -384,6 +454,15 @@ byte interpretCommand (byte command)
        {
          inputMode = 1;
          inLoc = strlen(getCellString(c_col, c_row));
+         totLen = inLoc;
+         if (inLoc > (x - 5U))
+          {
+            lChar = inLoc - x + 5U;
+          }
+         else
+          {
+            lChar = 0U;
+          }
        }
       break;
    case 'W':
