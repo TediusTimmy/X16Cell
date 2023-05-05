@@ -111,6 +111,8 @@ byte platformGetch (void)
    case KEY_RIGHT:
       ch = 29;
       break;
+   case KEY_HOME:
+      ch = 19;
     }
    return ch;
  }
@@ -188,6 +190,9 @@ byte platformGetch (void)
          break;
       case 77:
          ch = 29;
+         break;
+      case 71:
+         ch = 19;
          break;
        }
     }

@@ -72,7 +72,9 @@ void testConversions (void)
    const char* res;
    x_float a;
 
-   ASSERT_TRUE(8U == sizeof(struct CELL_ENTRY));
+      // I tried very hard to make this true, but I need those 2000 bytes.
+   //ASSERT_TRUE(8U == sizeof(struct CELL_ENTRY));
+   ASSERT_TRUE(7U == sizeof(struct CELL_ENTRY));
 
    res = convertName("A0 ", &col, &row);
    ASSERT_TRUE(res != NULL);

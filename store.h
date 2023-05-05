@@ -43,7 +43,6 @@ typedef struct CELL_ENTRY* centry;
 struct CELL_ENTRY
  {
    byte use;
-   byte padding;
    x_float prev;
  };
 

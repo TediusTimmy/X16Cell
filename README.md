@@ -1,7 +1,7 @@
 X16Cell
 =======
 
-Well, it works about as well as Excel does.... except Excel can save and load.
+Well, it works about as well as Excel does....
 
 In following my tradition of decimal spreadsheet programs, here is this abomination. This implements an eight digit decimal floating point number. The numerics are ... sloppy, to say the least, but it shouldn't be noticeable so long as you are only using the program to manage the budget of a normal person. Not a millionaire. The math, at this time, only supports round-to-zero* (*round-to-zero is not always round-to-zero, see further notes).
 
@@ -24,8 +24,8 @@ The formula evaluation engine has two stacks: one for data and one for operation
 Commands
 --------
 
-* `WASD` - Navigate the sheet (also the arrow keys, as soon as I recompile it)
-* `z` - Go to cell A0
+* `WASD` and Cursor keys - Navigate the sheet
+* `z` or Home - Go to cell A0
 * `[` - Decrease the size of the current column
 * `]` - Increase the size of the current column
 * `'` or `"` - Insert a label in this cell, overwriting previous contents
@@ -33,11 +33,13 @@ Commands
 * `!` - Recalculate sheet
 * `x` - Delete the current cell's contents
 * `e` - Edit the current cell (if it has contents)
-* `q` - Quit
+* `q` - Quit: you must follow a `q` with a `y` to really quit.
 * `,` - Toggle comma as the output decimal separator
 * `j` - Toggle row/column-major recalculation
 * `k` - Toggle left-to-right or right-to-left recalculation
 * `l` - Toggle top-to-bottom or bottom-to-top recalculation
+* `n` - Save file (use contents of current cell as file name)
+* `m` - "Load" file (use contents of current cell as file name)
 * `ENTER` - Exit edit mode
 
 
@@ -66,3 +68,9 @@ The list of functions:
 * ROUND
 * TRUNC
 * ABS
+
+
+Files
+-----
+
+The save file format is *very* basic: it outputs the characters needed to recreate the sheet from input. As such, the load function merges (and overwrites) the loaded file into whatever is currently loaded. It is very basic, but even that made me fight with my compiler due to my 16K (now 14K) table.

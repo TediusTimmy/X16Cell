@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "store.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #define NUM_ROWS 100U
 #define NUM_COLS  20U
@@ -296,11 +297,14 @@ byte getNextCommand (void)
    return platformGetch();
  }
 
+void doSave (void);
+void doLoad (void);
+
+static centry cell;
+static char* string;
 byte interpretCommand (byte command)
  {
    byte x, y, c, mx, mc, t;
-   centry cell;
-   char* string;
 
    if (1 == inputMode)
     {
@@ -455,6 +459,7 @@ byte interpretCommand (byte command)
       break;
    case 'Z':
    case 'z':
+   case 19:
       c_col = 0U;
       c_row = 0U;
       tr_col = 0U;
@@ -462,7 +467,28 @@ byte interpretCommand (byte command)
       break;
    case 'Q':
    case 'q':
-      return 1;
+      t = platformGetch();
+      if (('y' == t) || ('Y' == t))
+       {
+         return 1;
+       }
+      break;
+   case 'n':
+   case 'N':
+      string = getCellString(c_col, c_row);
+      strcpy(working, string);
+      doSave();
+      string = getCellString(c_col, c_row);
+      strcpy(string, working);
+      break;
+   case 'm':
+   case 'M':
+      string = getCellString(c_col, c_row);
+      strcpy(working, string);
+      doLoad();
+      string = getCellString(c_col, c_row);
+      strcpy(string, working);
+      break;
     }
    return 0;
  }
@@ -470,4 +496,88 @@ byte interpretCommand (byte command)
 void closeScreen (void)
  {
    platformCloseScreen();
+ }
+
+FILE* sl_file;
+void doSave (void)
+ {
+   byte row, col;
+   sl_file = fopen(working, "wb");
+   if (NULL == sl_file)
+    {
+      strcpy(working, "Failed to open file.");
+      return;
+    }
+   fputc('z', sl_file); // Go to top-left.
+   for (row = 0; row < NUM_ROWS;)
+    {
+      for (col = 0; col < NUM_COLS; ++col)
+       {
+         cell = lookupCell(col, row);
+         if (CELL_UNUSED != cell->use)
+          {
+            if (CELL_USE_LABEL == cell->use)
+             {
+               fputc('"', sl_file);
+             }
+            else if (CELL_USE_VALUE == cell->use)
+             {
+               fputc('=', sl_file);
+             }
+            fputs(getCellString(col, row), sl_file);
+            fputc('\n', sl_file);
+          }
+         fputc('d', sl_file);
+       }
+      fputc('s', sl_file);
+      ++row;
+      for (col = NUM_COLS - 1U; col != (byte)(0U - 1U); --col)
+       {
+         cell = lookupCell(col, row);
+         if (CELL_UNUSED != cell->use)
+          {
+            if (CELL_USE_LABEL == cell->use)
+             {
+               fputc('"', sl_file);
+             }
+            else if (CELL_USE_VALUE == cell->use)
+             {
+               fputc('=', sl_file);
+             }
+            fputs(getCellString(col, row), sl_file);
+            fputc('\n', sl_file);
+          }
+         fputc('a', sl_file);
+       }
+      fputc('s', sl_file);
+      ++row;
+    }
+   fputc('z', sl_file);
+   if (ferror(sl_file))
+    {
+      strcpy(working, "Error during file load.");
+    }
+   fclose(sl_file);
+ }
+
+void doLoad (void)
+ {
+   byte ch;
+   sl_file = fopen(working, "rb");
+   if (NULL == sl_file)
+    {
+      strcpy(working, "Failed to open file.");
+      return;
+    }
+   ch = fgetc(sl_file);
+   while (!feof(sl_file))
+    {
+      interpretCommand(ch);
+      ch = fgetc(sl_file);
+    }
+   if (ferror(sl_file))
+    {
+      strcpy(working, "Error during file load.");
+    }
+   fclose(sl_file);
  }

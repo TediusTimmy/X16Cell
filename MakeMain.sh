@@ -4,7 +4,7 @@
 ./comp/bin/cc65 --target cx16 -O -o obj/store.s    store.c
 ./comp/bin/cc65 --target cx16 -O -o obj/shunting.s shunting.c
 ./comp/bin/cc65 --target cx16 -O -o obj/machina.s  machina.c
-./comp/bin/cc65 --target cx16 -O -o obj/ui.s       ui.c
+./comp/bin/cc65 --target cx16 --static-locals -O -o obj/ui.s ui.c
 ./comp/bin/cc65 --target cx16 -O -o obj/main.s     main.c
 
 ./comp/bin/ca65 -t cx16 -o obj/floats.o obj/floats.s
