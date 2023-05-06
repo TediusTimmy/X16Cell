@@ -319,51 +319,55 @@ byte interpretCommand (byte command)
           (('A' <= command) && ('Z' >= command)))
 #endif
        {
+            // A normal character to be inserted into the cell.
          if (totLen != 120U)
           {
             if (inLoc == totLen)
              {
                string[inLoc] = command;
-               ++inLoc;
-               string[inLoc] = '\0';
-               ++totLen;
-
-               if (inLoc > (x - 5U + lChar))
-                {
-                  ++lChar;
-                }
+               string[inLoc + 1U] = '\0';
              }
             else
              {
+               memmove(&string[inLoc + 1], &string[inLoc], totLen - inLoc + 1U);
+               string[inLoc] = command;
              }
-          }
-       }
-      else if (('\b' == command) || (0177 == command))
-       {
-         if (inLoc == totLen)
-          {
-            if (0U != inLoc)
-             {
-               --inLoc;
-               --totLen;
+            ++inLoc;
+            ++totLen;
 
-               if ((inLoc + lChar) > totLen)
-                {
-                  --lChar;
-                }
+            if (inLoc > (x - 5U + lChar))
+             {
+               ++lChar;
              }
-            string[inLoc] = '\0';
-          }
-         else
-          {
           }
        }
-      else if ((command == '\n') || (command == '\r'))
+      else if (('\b' == command) || (0177 == command)) // Backspace
+       {
+         if (0U != inLoc)
+          {
+            if (inLoc == totLen)
+             {
+               string[inLoc - 1U] = '\0';
+             }
+            else
+             {
+               memmove(&string[inLoc - 1], &string[inLoc], totLen - inLoc + 1U);
+             }
+            --inLoc;
+            --totLen;
+
+            if ((inLoc + lChar) > totLen)
+             {
+               --lChar;
+             }
+          }
+       }
+      else if ((command == '\n') || (command == '\r')) // Enter
        {
          inputMode = 0;
          recalculate(c_major, top_down, left_right);
        }
-      else if (command == 157)
+      else if (command == 157) // Cursor Left
        {
          if (0U != inLoc)
           {
@@ -375,7 +379,7 @@ byte interpretCommand (byte command)
              }
           }
        }
-      else if (command == 29)
+      else if (command == 29) // Cursor Right
        {
          if (inLoc != totLen)
           {
@@ -387,13 +391,13 @@ byte interpretCommand (byte command)
              }
           }
        }
-      else if (command == 19)
+      else if (command == 19) // Home
        {
          inLoc = 0U;
          lChar = 0U;
        }
-      else if (command == 148)
-       {
+      else if ((command == 4) || (command == 148)) // Insert / End
+       { // Insert on Commodore because the C64 keyboard doesn't have End
          inLoc = totLen;
          if (inLoc > (x - 5U))
           {
@@ -402,6 +406,19 @@ byte interpretCommand (byte command)
          else
           {
             lChar = 0U;
+          }
+       }
+      else if (command == 25) // Delete
+       {
+         if (inLoc != totLen)
+          {
+            memmove(&string[inLoc], &string[inLoc + 1], totLen - inLoc + 1U);
+            --totLen;
+
+            if ((inLoc + lChar) > totLen)
+             {
+               --lChar;
+             }
           }
        }
       return 0;
@@ -558,7 +575,10 @@ byte interpretCommand (byte command)
       strcpy(working, string);
       doSave();
       string = getCellString(c_col, c_row);
-      strcpy(string, working);
+      if ('\0' != *working)
+       {
+         strcpy(string, working);
+       }
       break;
    case 'm':
    case 'M':
@@ -566,7 +586,10 @@ byte interpretCommand (byte command)
       strcpy(working, string);
       doLoad();
       string = getCellString(c_col, c_row);
-      strcpy(string, working);
+      if ('\0' != *working)
+       {
+         strcpy(string, working);
+       }
       break;
     }
    return 0;
@@ -636,6 +659,10 @@ void doSave (void)
     {
       strcpy(working, "Error during file load.");
     }
+   else
+    {
+      *working = '\0';
+    }
    fclose(sl_file);
  }
 
@@ -657,6 +684,10 @@ void doLoad (void)
    if (ferror(sl_file))
     {
       strcpy(working, "Error during file load.");
+    }
+   else
+    {
+      *working = '\0';
     }
    fclose(sl_file);
  }

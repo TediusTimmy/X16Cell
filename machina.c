@@ -117,6 +117,9 @@ byte platformGetch (void)
    case KEY_END:
       ch = 148;
       break;
+   case KEY_DC:
+      ch = 25;
+      break;
     }
    return ch;
  }
@@ -183,23 +186,26 @@ byte platformGetch (void)
     {
       switch (getch())
        {
-      case 72:
+      case 72: // Cursor Up
          ch = 145;
          break;
-      case 80:
+      case 80: // Cursor Down
          ch = 17;
          break;
-      case 75:
+      case 75: // Cursor Left
          ch = 157;
          break;
-      case 77:
+      case 77: // Cursor Right
          ch = 29;
          break;
-      case 71:
+      case 71: // Home Key
          ch = 19;
          break;
-      case 79:
+      case 79: // End Key
          ch = 148;
+         break;
+      case 83: // Delete Key
+         ch = 25;
          break;
        }
     }
