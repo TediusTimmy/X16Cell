@@ -363,6 +363,7 @@ const char* shuntingYard (x_float dest, const char* src, byte inAFunk)
          fail |= pushData(); // Just increments sy_dsp and checks for error.
          if (0 == fail)
           {
+            last = 1;
             src = convertName(src, &col, &row);
             if (NULL != src)
              {

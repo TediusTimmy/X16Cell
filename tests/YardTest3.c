@@ -130,6 +130,10 @@ void testYard (void)
    setFloat(b, 0, 0, 0x60, 0, 0, 0); // Another bug found during manual testing. Space between : and c2 wasn't eaten.
    shuntingYard(a, " @max(a0 :  c2) ", 0U);
    ASSERT_EQ(b, a);
+
+   setFloat(b, 0, 0, 0x40, 0, 0, 0); // Another bug found during manual testing. Cell references weren't number-like.
+   shuntingYard(a, " b0-2 ", 0U);
+   ASSERT_EQ(b, a);
  }
 
 
