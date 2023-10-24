@@ -55,6 +55,10 @@ static char tempFloat [15];
 static char working [CELL_STR_LEN];
 static byte lChar, inLoc, totLen;
 
+static byte redrawEverything;
+static byte l_col;
+static byte l_row;
+
 static void setComma(char* str)
  {
    char* c;
@@ -84,6 +88,8 @@ void initializeScreen (void)
 
    inputMode = 0U;
    useComma = 0U;
+
+   redrawEverything = 1U;
 
    for (i = 0; i < NUM_COLS; ++i)
     {
@@ -185,14 +191,22 @@ void updateScreen (void)
       t = widths[r];
       if (q + t <= x)
        {
-         if (r == c_col) platformColors(COLOR_HIGHLIGHT);
-         q += t;
-         --t;
-         for (i = 0; i < (t >> 1); ++i) platformPutch(' ');
-         platformPutch('A' + r);
-         for (i = 0; i < (t >> 1); ++i) platformPutch(' ');
-         if (t & 1) platformPutch(' ');
-         if (r == c_col) platformColors(COLOR_HEADER);
+         if ((1U == redrawEverything) || (r == c_col) || (r == l_col))
+          {
+            if (0U == redrawEverything) platformGotoxy(q, 2);
+            if (r == c_col) platformColors(COLOR_HIGHLIGHT);
+            q += t;
+            --t;
+            for (i = 0; i < (t >> 1); ++i) platformPutch(' ');
+            platformPutch('A' + r);
+            for (i = 0; i < (t >> 1); ++i) platformPutch(' ');
+            if (t & 1) platformPutch(' ');
+            if (r == c_col) platformColors(COLOR_HEADER);
+          }
+         else
+          {
+            q += t;
+          }
        }
       else
        {
@@ -200,26 +214,33 @@ void updateScreen (void)
        }
       ++r;
     }
-   platformColors(COLOR_HIGHLIGHT);
-   for (; q < x; ++q) platformPutch(' ');
+   if (1U == redrawEverything)
+    {
+      platformColors(COLOR_HIGHLIGHT);
+      for (; q < x; ++q) platformPutch(' ');
+    }
 
       // All other lines:
    for (i = 3U; i < y; ++i)
     {
       r = tr_row + i - 3U;
-      if (r == c_row) platformColors(COLOR_HIGHLIGHT);
-      else platformColors(COLOR_HEADER);
-      t = 0U;
-      q = 0U;
-      while (t <= r)
+      if ((1U == redrawEverything) || (r == c_row) || (r == l_row))
        {
-         t += 10;
-         ++q;
+         if (0U == redrawEverything) platformGotoxy(0, i);
+         if (r == c_row) platformColors(COLOR_HIGHLIGHT);
+         else platformColors(COLOR_HEADER);
+         t = 0U;
+         q = 0U;
+         while (t <= r)
+          {
+            t += 10;
+            ++q;
+          }
+         --q;
+         if (0U == q) platformPutch(' ');
+         else platformPutch('0' + q);
+         platformPutch('0' + r - t + 10U);
        }
-      --q;
-      if (0U == q) platformPutch(' ');
-      else platformPutch('0' + q);
-      platformPutch('0' + r - t + 10U);
 
       q = 2U;
       c = tr_col;
@@ -228,57 +249,65 @@ void updateScreen (void)
          t = widths[c];
          if (q + t <= x)
           {
-            if ((c == c_col) && (r == c_row))
+            if ((1U == redrawEverything) || ((c == c_col) && (r == c_row)) || ((c == l_col) && (r == l_row)))
              {
-               platformColors(COLOR_HEADER);
-               if (0 == inputMode)
+               if (0U == redrawEverything) platformGotoxy(q, i);
+               if ((c == c_col) && (r == c_row))
                 {
-                  mx = ((q << 1U) + t) >> 1;
-                  my = i;
-                }
-             }
-            else
-             {
-               platformColors(COLOR_NORMAL);
-             }
-            q += t;
-            cell = lookupCell(c, r);
-            if (CELL_UNUSED != cell->use)
-             {
-               if (CELL_USE_LABEL == cell->use)
-                {
-                  strcpy(working, getCellString(c, r));
-                  if (strlen(working) > t) working[t] = '\0';
-                  else
+                  platformColors(COLOR_HEADER);
+                  if (0 == inputMode)
                    {
-                     j = strlen(working);
-                     memset(working + j, ' ', t - j);
-                     working[t] = '\0';
+                     mx = ((q << 1U) + t) >> 1;
+                     my = i;
                    }
                 }
                else
                 {
-                  float_to_str(tempFloat, *lookupCellValue(c, r));
-                  setComma(tempFloat);
-                  strcpy(working, tempFloat);
-                  if (strlen(working) > t)
+                  platformColors(COLOR_NORMAL);
+                }
+               q += t;
+               cell = lookupCell(c, r);
+               if (CELL_UNUSED != cell->use)
+                {
+                  if (CELL_USE_LABEL == cell->use)
                    {
-                     working[t] = '\0';
-                     working[t - 1U] = '#';
+                     strcpy(working, getCellString(c, r));
+                     if (strlen(working) > t) working[t] = '\0';
+                     else
+                      {
+                        j = strlen(working);
+                        memset(working + j, ' ', t - j);
+                        working[t] = '\0';
+                      }
                    }
                   else
                    {
-                     j = strlen(working);
-                     memmove(working + t - j, working, j + 1);
-                     memset(working, ' ', t - j);
+                     float_to_str(tempFloat, *lookupCellValue(c, r));
+                     setComma(tempFloat);
+                     strcpy(working, tempFloat);
+                     if (strlen(working) > t)
+                      {
+                        working[t] = '\0';
+                        working[t - 1U] = '#';
+                      }
+                     else
+                      {
+                        j = strlen(working);
+                        memmove(working + t - j, working, j + 1);
+                        memset(working, ' ', t - j);
+                      }
                    }
+                  platformPuts(working);
+                  for (j = t - strlen(working) - 1; j != (byte)(0U - 1U); --j) platformPutch(' ');
                 }
-               platformPuts(working);
-               for (j = t - strlen(working) - 1; j != (byte)(0U - 1U); --j) platformPutch(' ');
+               else
+                {
+                  for (j = 0; j < t; ++j) platformPutch(' ');
+                }
              }
             else
              {
-               for (j = 0; j < t; ++j) platformPutch(' ');
+               q += t;
              }
           }
          else
@@ -287,10 +316,14 @@ void updateScreen (void)
           }
          ++c;
        }
-      platformColors(COLOR_HIGHLIGHT);
-      for (; q < x; ++q) platformPutch(' ');
+      if (1U == redrawEverything)
+       {
+         platformColors(COLOR_HIGHLIGHT);
+         for (; q < x; ++q) platformPutch(' ');
+       }
     }
 
+   redrawEverything = 0U;
    platformGotoxy(mx, my);
  }
 
@@ -366,6 +399,7 @@ byte interpretCommand (byte command)
       else if ((command == '\n') || (command == '\r')) // Enter
        {
          inputMode = 0;
+         redrawEverything = 1U;
          recalculate(c_major, top_down, left_right);
        }
       else if (command == 157) // Cursor Left
@@ -490,8 +524,14 @@ byte interpretCommand (byte command)
    case 145:
       if (0U != c_row)
        {
+         l_row = c_row;
+         l_col = c_col;
          --c_row;
-         if (c_row < tr_row) --tr_row;
+         if (c_row < tr_row)
+          {
+            redrawEverything = 1U;
+            --tr_row;
+          }
        }
       break;
    case 'S':
@@ -499,8 +539,14 @@ byte interpretCommand (byte command)
    case 17:
       if ((NUM_ROWS - 1U) != c_row)
        {
+         l_row = c_row;
+         l_col = c_col;
          ++c_row;
-         if ((c_row - tr_row) >= (y - 3)) ++tr_row;
+         if ((c_row - tr_row) >= (y - 3))
+          {
+            redrawEverything = 1U;
+            ++tr_row;
+          }
        }
       break;
    case 'A':
@@ -508,8 +554,14 @@ byte interpretCommand (byte command)
    case 157:
       if (0U != c_col)
        {
+         l_row = c_row;
+         l_col = c_col;
          --c_col;
-         if (c_col < tr_col) --tr_col;
+         if (c_col < tr_col)
+          {
+            redrawEverything = 1U;
+            --tr_col;
+          }
        }
       break;
    case 'D':
@@ -517,13 +569,20 @@ byte interpretCommand (byte command)
    case 29:
       if ((NUM_COLS - 1U) != c_col)
        {
+         l_row = c_row;
+         l_col = c_col;
          ++c_col;
-         if ((c_col - tr_col) >= mc) ++tr_col;
+         if ((c_col - tr_col) >= mc)
+          {
+            redrawEverything = 1U;
+            ++tr_col;
+          }
        }
       break;
    case ']':
       if (widths[c_col] != 30)
        {
+         redrawEverything = 1U;
          ++widths[c_col];
          if (((mx + 1) > x) && (c_col == (tr_col + mc - 1U))) ++tr_col;
        }
@@ -531,10 +590,12 @@ byte interpretCommand (byte command)
    case '[':
       if (widths[c_col] != 1)
        {
+         redrawEverything = 1U;
          --widths[c_col];
        }
       break;
    case '!':
+      redrawEverything = 1U;
       recalculate(c_major, top_down, left_right);
       break;
    case 'J':
@@ -559,6 +620,7 @@ byte interpretCommand (byte command)
    case 'Z':
    case 'z':
    case 19:
+      redrawEverything = 1U;
       c_col = 0U;
       c_row = 0U;
       tr_col = 0U;
