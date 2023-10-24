@@ -20,6 +20,8 @@ Limits
 There are 100 rows (0 to 99) and twenty columns (A - T). Each cell can have 120 bytes of data in it: the string representation of the cell can be a maximum of 120 bytes. Cell calculation follows the recalculation strategy and will gladly use stale values if that cell hasn't been recomputed yet (and it doesn't do the "normal spreadsheet" thing of doing multiple passes).  
 The formula evaluation engine has two stacks: one for data and one for operations. The data stack is fifteen values deep, and the operation stack is thirty one values deep. If I understand the manual correctly, these stacks are larger than a late 90's budget graphing calculator.
 
+Update: there are now 26 columns.
+
 
 Commands
 --------

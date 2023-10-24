@@ -68,7 +68,7 @@ void testYard (void)
    initStore();
 
    lookupCell(3U, 5U)->use = CELL_USE_VALUE;
-   setFloat(lookupCell(3U, 5U)->prev, 0, 0, 0x50, 0, 0, 0);
+   setFloat(*lookupCellValue(3U, 5U), 0, 0, 0x50, 0, 0, 0);
    setFloat(b, 0, 0, 0x50, 0, 0, 0);
    shuntingYard(a, " D5 ", 0);
    ASSERT_EQ(b, a);

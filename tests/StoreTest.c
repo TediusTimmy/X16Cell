@@ -72,9 +72,7 @@ void testConversions (void)
    const char* res;
    x_float a;
 
-      // I tried very hard to make this true, but I need those 2000 bytes.
-   //ASSERT_TRUE(8U == sizeof(struct CELL_ENTRY));
-   ASSERT_TRUE(7U == sizeof(struct CELL_ENTRY));
+   ASSERT_TRUE(2U == sizeof(struct CELL_ENTRY));
 
    res = convertName("A0 ", &col, &row);
    ASSERT_TRUE(res != NULL);
@@ -110,7 +108,7 @@ void testConversions (void)
    ASSERT_TRUE(res == NULL);
 
    res = convertName("U6", &col, &row);
-   ASSERT_TRUE(res == NULL);
+   ASSERT_TRUE(res != NULL);
 
    res = convertName("A-1", &col, &row);
    ASSERT_TRUE(res == NULL);
@@ -157,8 +155,8 @@ void testConversions (void)
    recalculate(0, 1, 1);
 
    setFloat(a, 0, 0, 0x50, 0, 0, 0);
-   ASSERT_EQ(a, lookupCell(0U, 0U)->prev);
-   ASSERT_EQ(a, lookupCell(1U, 0U)->prev);
+   ASSERT_EQ(a, *lookupCellValue(0U, 0U));
+   ASSERT_EQ(a, *lookupCellValue(1U, 0U));
  }
 
 

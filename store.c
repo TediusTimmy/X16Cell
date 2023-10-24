@@ -33,31 +33,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "shunting.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #define NUM_ROWS 100U
-#define NUM_COLS  20U
+#define NUM_COLS  26U
 
-   // This isn't even my final form!
-static struct CELL_ENTRY store [ NUM_ROWS * NUM_COLS ];
-static const centry BEGIN = store;
-static const centry END = store + NUM_ROWS * NUM_COLS;
+static centry BEGIN;
+static centry END;
 
 void initStore (void)
  {
    centry iter;
+   int loc;
+   setStorePageReserved(0U);
+   BEGIN = (centry) getStore(0U);
+   END = BEGIN + NUM_ROWS * NUM_COLS;
+   loc = 0;
    for (iter = BEGIN; iter != END; ++iter)
     {
       iter->use = CELL_UNUSED;
+      iter->loc = loc;
+      ++loc;
     }
  }
 
 const char* convertName (const char* src, byte* col, byte* row)
  {
-   if ((*src >= 'A') && (*src <= 'T'))
+   if ((*src >= 'A') && (*src <= 'Z'))
     {
       *col = *src - 'A';
     }
-   else if ((*src >= 'a') && (*src <= 't'))
+   else if ((*src >= 'a') && (*src <= 'z'))
     {
       *col = *src - 'a';
     }
@@ -93,18 +99,18 @@ const char* convertName (const char* src, byte* col, byte* row)
 
 centry lookupCell (byte col, byte row)
  {
-//   int temp = (int)row;
-//   temp = ((temp << 2U) + temp) << 2U;
-//   return &store[ temp + ((int)col) ];
-   return &store[ ((int)row) * NUM_COLS + ((int)col) ];
+   setStorePageReserved(0U);
+   return &BEGIN[ ((int)row) * NUM_COLS + ((int)col) ];
  }
 
 x_float* lookupCellValue (byte col, byte row)
  {
    centry temp = lookupCell(col, row);
+   word loc = temp->loc;
    if (CELL_USE_VALUE == temp->use)
     {
-      return &(temp->prev);
+      setStorePage(loc >> 6);
+      return (x_float*)(getStore(loc & 63) + CELL_STR_LEN);
     }
    else
     {
@@ -114,19 +120,23 @@ x_float* lookupCellValue (byte col, byte row)
 
 char* getCellString (byte col, byte row)
  {
-   int location;
-   location = ((int)row) * NUM_COLS + ((int)col);
-   setStorePage(location >> 6);
-   return getStore(location & 63);
+   centry temp = lookupCell(col, row);
+   word loc = temp->loc;
+   setStorePage(loc >> 6);
+   return getStore(loc & 63);
  }
 
+char max_entry [CELL_STR_LEN];
+x_float ret_val;
 void interlinked (byte col, byte row)
  {
    centry cell; // Do they keep you in a cell?
    cell = lookupCell(col, row); // Cells
    if (CELL_USE_VALUE == cell->use) // What's it like to hold the hand of someone you love?
     {
-      shuntingYard(cell->prev, getCellString(col, row), 0); // Interlinked
+      strcpy(max_entry, getCellString(col, row));
+      shuntingYard(ret_val, max_entry, 0); // Interlinked
+      float_cpy(*lookupCellValue(col, row), ret_val); // Should NEVER be NULL.
     }
  }
 

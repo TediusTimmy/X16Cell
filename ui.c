@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 
 #define NUM_ROWS 100U
-#define NUM_COLS  20U
+#define NUM_COLS  26U
 
 static byte c_col;
 static byte c_row;
@@ -52,7 +52,7 @@ static byte inputMode;
 static byte useComma;
 
 static char tempFloat [15];
-static char working [128];
+static char working [CELL_STR_LEN];
 static byte lChar, inLoc, totLen;
 
 static void setComma(char* str)
@@ -135,7 +135,7 @@ void updateScreen (void)
       else
        {
          platformPuts("VALUE ");
-         float_to_str(tempFloat, cell->prev);
+         float_to_str(tempFloat, *lookupCellValue(c_col, c_row));
          setComma(tempFloat);
          platformPuts(tempFloat);
          for (q = x - 13U - strlen(tempFloat); q != (byte)(0U - 1U); --q) platformPutch(' ');
@@ -157,6 +157,7 @@ void updateScreen (void)
     }
 
       // Line 2 : Edit line
+   cell = lookupCell(c_col, c_row);
    platformColors(COLOR_NORMAL);
    if (CELL_UNUSED != cell->use)
     {
@@ -257,7 +258,7 @@ void updateScreen (void)
                 }
                else
                 {
-                  float_to_str(tempFloat, cell->prev);
+                  float_to_str(tempFloat, *lookupCellValue(c, r));
                   setComma(tempFloat);
                   strcpy(working, tempFloat);
                   if (strlen(working) > t)
@@ -320,7 +321,7 @@ byte interpretCommand (byte command)
 #endif
        {
             // A normal character to be inserted into the cell.
-         if (totLen != 120U)
+         if (totLen != CELL_MAX_LEN)
           {
             if (inLoc == totLen)
              {
@@ -457,13 +458,15 @@ byte interpretCommand (byte command)
    case '=':
    case '+':
       cell->use = CELL_USE_VALUE;
-      *getCellString(c_col, c_row) = '\0';
+      string = getCellString(c_col, c_row);
+      *string = '\0';
       lChar = 0;
       inLoc = 0;
       totLen = 0;
       inputMode = 1;
-      memset(cell->prev, '\0', 6);
-      cell->prev[0] = 0x80;
+      string += CELL_STR_LEN;
+      memset(string, '\0', 6);
+      *string = -128;
       break;
    case 'E':
    case 'e':

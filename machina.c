@@ -31,14 +31,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "machina.h"
 
+#define BASE_PAGE_RESERVED 8;
+#define BASE_PAGE_NORMAL 10;
+
 #ifdef __GNUC__
 
 static int storePage;
 static char store [8192 * 63]; // The whole 512K available to the X16.
 
+void setStorePageReserved(byte pageNo)
+ {
+   storePage = pageNo + BASE_PAGE_RESERVED;
+   storePage <<= 13;
+ }
+
 void setStorePage(byte pageNo)
  {
-   storePage = pageNo;
+   storePage = pageNo + BASE_PAGE_NORMAL;
    storePage <<= 13;
  }
 
@@ -238,11 +247,14 @@ void platformCloseScreen (void)
 
 #ifdef __CC65__
 
-#define BASE_PAGE 8;
+void setStorePageReserved(byte pageNo)
+ {
+   *((byte*)0) = pageNo + BASE_PAGE_RESERVED;
+ }
 
 void setStorePage(byte pageNo)
  {
-   *((byte*)0) = pageNo + BASE_PAGE;
+   *((byte*)0) = pageNo + BASE_PAGE_NORMAL;
  }
 
 char* getStore(byte indexInCurrentPage)

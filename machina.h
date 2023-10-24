@@ -34,7 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef unsigned char byte;
 typedef signed char small;
+typedef unsigned short word;
 
+void setStorePageReserved (byte pageNo);
 void setStorePage (byte pageNo);
 char* getStore (byte indexInCurrentPage);
 

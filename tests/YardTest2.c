@@ -161,13 +161,14 @@ void testYard (void)
    ASSERT_EQ(b, a);
 
    setFloat(b, -128, -128, 0, 0, 0, 0);
-   shuntingYard(a, " Z2 ", 0);
+   shuntingYard(a, " Z200 ", 0);
    ASSERT_EQ(b, a);
  }
 
 
 int main (void)
  {
+   initStore();
    testYard();
 
    printf("DONE\n");

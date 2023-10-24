@@ -38,19 +38,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CELL_USE_LABEL 1
 #define CELL_USE_VALUE 2
 
+   // I know the math doesn't add up here.
+#define CELL_MAX_LEN 120U
+#define CELL_STR_LEN 122U
+
 typedef struct CELL_ENTRY* centry;
 
 struct CELL_ENTRY
  {
-   byte use;
-   x_float prev;
+   byte use :  3;
+   word loc : 13;
  };
 
 void initStore (void);
-const char* convertName (const char* src, byte* col, byte* row); // Returns NULL on error.
-centry lookupCell (byte col, byte row);
-x_float* lookupCellValue (byte col, byte row); // Returns NULL if not CELL_USE_VALUE.
-char* getCellString (byte col, byte row); // This call invalidates the pointer to previous calls of this function.
+   // Returns NULL on error. Loads the name location in (col, row) and returns the end of string.
+const char* convertName (const char* src, byte* col, byte* row);
+   // These calls invalidate the pointer to previous calls of this function.
+centry lookupCell (byte col, byte row); // Returns pointer in HiRAM
+x_float* lookupCellValue (byte col, byte row); // Returns NULL if not CELL_USE_VALUE. Returns pointer in HiRAM
+char* getCellString (byte col, byte row); // Returns pointer in HiRAM
 
 void recalculate (byte major, byte td, byte lr);
 
