@@ -271,6 +271,7 @@ void platformInitializeScreen (void)
  {
       // This is graphically glitchy, but I rather it is on.
    cursor(1U);
+   videomode(VIDEOMODE_80x30); // Hiding a graphical problem that only occurs in 80x60 mode.
  }
 
 void platformScreensize (byte* x, byte* y)
@@ -319,6 +320,7 @@ void platformPuts (char* s)
 
 void platformCloseScreen (void)
  {
+   videomode(VIDEOMODE_80COL);
  }
 
 #endif /* __CC65__ */
