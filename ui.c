@@ -59,6 +59,8 @@ static byte redrawEverything;
 static byte l_col;
 static byte l_row;
 
+static byte supressRecalc;
+
 static void setComma(char* str)
  {
    char* c;
@@ -90,6 +92,7 @@ void initializeScreen (void)
    useComma = 0U;
 
    redrawEverything = 1U;
+   supressRecalc = 0U;
 
    for (i = 0; i < NUM_COLS; ++i)
     {
@@ -332,10 +335,21 @@ byte getNextCommand (void)
    return platformGetch();
  }
 
+static centry cell;
+static word toSave;
+static void swapAndClear(byte col, byte row)
+ {
+   cell = lookupCell(col, row);
+   toSave = cell->loc;
+   memmove(cell, cell + 1, sizeof(struct CELL_ENTRY) * (NUM_COLS - col - 1));
+   cell += (NUM_COLS - col - 1);
+   cell->loc = toSave;
+   cell->use = CELL_UNUSED;
+ }
+
 void doSave (void);
 void doLoad (void);
 
-static centry cell;
 static char* string;
 byte interpretCommand (byte command)
  {
@@ -400,7 +414,7 @@ byte interpretCommand (byte command)
        {
          inputMode = 0;
          redrawEverything = 1U;
-         recalculate(c_major, top_down, left_right);
+         if (0U == supressRecalc) recalculate(c_major, top_down, left_right);
        }
       else if (command == 157) // Cursor Left
        {
@@ -612,7 +626,33 @@ byte interpretCommand (byte command)
       break;
    case 'X':
    case 'x':
-      cell->use = CELL_UNUSED;
+      t = platformGetch();
+      switch (t)
+       {
+      case 'X':
+      case 'x':
+         cell->use = CELL_UNUSED;
+         break;
+      case 'R':
+      case 'r':
+         for (c = 0; c < NUM_COLS; ++c)
+          {
+            cell = lookupCell(c, c_row);
+            cell->use = CELL_UNUSED;
+          }
+         redrawEverything = 1U;
+         break;
+      case 'C':
+      case 'c':
+         for (c = 0; c < NUM_ROWS; ++c)
+          {
+            cell = lookupCell(c_col, c);
+            cell->use = CELL_UNUSED;
+          }
+         redrawEverything = 1U;
+         break;
+       }
+      recalculate(c_major, top_down, left_right);
       break;
    case ',':
       useComma ^= 1U;
@@ -655,6 +695,51 @@ byte interpretCommand (byte command)
        {
          strcpy(string, working);
        }
+      recalculate(c_major, top_down, left_right);
+      break;
+   case 'U':
+   case 'u':
+      t = platformGetch();
+      switch (t)
+       {
+      case 'U':
+      case 'u':
+         swapAndClear(c_col, c_row);
+         break;
+      case 'O':
+      case 'o':
+         toSave = cell->loc;
+         for (c = c_row; c < (NUM_ROWS - 1); ++c)
+          {
+            cell->use = (cell + NUM_COLS)->use;
+            cell->loc = (cell + NUM_COLS)->loc;
+            cell += NUM_COLS;
+          }
+         cell->loc = toSave;
+         cell->use = CELL_UNUSED;
+         break;
+      case 'R':
+      case 'r':
+         cell = lookupCell(0U, c_row);
+         memcpy(cell + (NUM_COLS * (NUM_ROWS - c_row)), cell, sizeof(struct CELL_ENTRY) * NUM_COLS);
+         memmove(cell, cell + NUM_COLS, sizeof(struct CELL_ENTRY) * NUM_COLS * (NUM_ROWS - c_row));
+         cell += (NUM_COLS * (NUM_ROWS - c_row - 1));
+         for (c = 0; c < NUM_COLS; ++c)
+          {
+            cell->use = CELL_UNUSED;
+            ++cell;
+          }
+         break;
+      case 'C':
+      case 'c':
+         for (c = 0; c < NUM_ROWS; ++c)
+          {
+            swapAndClear(c_col, c);
+          }
+         break;
+       }
+      redrawEverything = 1U;
+      recalculate(c_major, top_down, left_right);
       break;
     }
    return 0;
@@ -740,12 +825,14 @@ void doLoad (void)
       strcpy(working, "Failed to open file.");
       return;
     }
+   supressRecalc = 1U;
    ch = fgetc(sl_file);
    while (!feof(sl_file))
     {
       interpretCommand(ch);
       ch = fgetc(sl_file);
     }
+   supressRecalc = 0U;
    if (ferror(sl_file))
     {
       strcpy(working, "Error during file load.");

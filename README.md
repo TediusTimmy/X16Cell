@@ -26,6 +26,8 @@ Update: there are now 26 columns.
 Commands
 --------
 
+Update: you now need to press `x` _twice_ to delete the current cell's contents.
+
 * `WASD` and Cursor keys - Navigate the sheet
 * `z` or Home - Go to cell A0
 * `[` - Decrease the size of the current column
@@ -33,8 +35,20 @@ Commands
 * `'` or `"` - Insert a label in this cell, overwriting previous contents
 * `=` or `+` - Insert a formula in this cell, overwriting previous contents
 * `!` - Recalculate sheet
-* `x` - Delete the current cell's contents
+* `xx` - Delete/clear the current cell's contents
+* `xr` - Delete/clear the current row's contents
+* `xc` - Delete/clear the current column's contents
 * `e` - Edit the current cell (if it has contents)
+* `ii` - Insert a cell at this location, pushing current cells right and deleting the right-most cell.
+* `ir` - Insert a new row at this row, pushing current rows down and deleting the bottom-most row.
+* `ic` - Insert a new column at this column, pushing current columns right and deleting the right-most column.
+* `oo` - Insert a cell at this location, pushing current cells down and deleting the bottom-most cell.
+* `or` - Insert a new row below this row, pushing current rows down and deleting the bottom-most row.
+* `oc` - Insert a new column to the right of this column, pushing current columns right and deleting the right-most column.
+* `uu` - Remove the current cell, shifting existing cells left
+* `uo` - Remove the current cell, shifting existing cells up
+* `ur` - Remove the current row, shifting existing rows up
+* `uc` - Remove the current column, shifting existing columns left
 * `q` - Quit: you must follow a `q` with a `y` to really quit.
 * `,` - Toggle comma as the output decimal separator
 * `j` - Toggle row/column-major recalculation
