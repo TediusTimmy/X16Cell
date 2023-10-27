@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define NUM_ROWS 100U
 #define NUM_COLS  26U
+#define DEF_WIDTH 9U
 
 static byte c_col;
 static byte c_row;
@@ -96,7 +97,7 @@ void initializeScreen (void)
 
    for (i = 0; i < NUM_COLS; ++i)
     {
-      widths[i] = 9U;
+      widths[i] = DEF_WIDTH;
     }
 
    platformInitializeScreen();
@@ -337,12 +338,21 @@ byte getNextCommand (void)
 
 static centry cell;
 static word toSave;
-static void swapAndClear(byte col, byte row)
+static void swapOutAndClear(byte col, byte row)
  {
    cell = lookupCell(col, row);
    toSave = cell->loc;
    memmove(cell, cell + 1, sizeof(struct CELL_ENTRY) * (NUM_COLS - col - 1));
    cell += (NUM_COLS - col - 1);
+   cell->loc = toSave;
+   cell->use = CELL_UNUSED;
+ }
+
+static void swapInAndClear(byte col, byte row)
+ {
+   cell = lookupCell(col, row);
+   toSave = (cell + (NUM_COLS - col - 1))->loc;
+   memmove(cell + 1, cell, sizeof(struct CELL_ENTRY) * (NUM_COLS - col - 1));
    cell->loc = toSave;
    cell->use = CELL_UNUSED;
  }
@@ -589,7 +599,13 @@ byte interpretCommand (byte command)
          if ((c_col - tr_col) >= mc)
           {
             redrawEverything = 1U;
+            mx -= widths[tr_col];
             ++tr_col;
+            while (mx + widths[c_col] > x)
+             {
+               mx -= widths[tr_col];
+               ++tr_col;
+             }
           }
        }
       break;
@@ -635,7 +651,7 @@ byte interpretCommand (byte command)
          break;
       case 'R':
       case 'r':
-         for (c = 0; c < NUM_COLS; ++c)
+         for (c = 0U; c < NUM_COLS; ++c)
           {
             cell = lookupCell(c, c_row);
             cell->use = CELL_UNUSED;
@@ -644,7 +660,7 @@ byte interpretCommand (byte command)
          break;
       case 'C':
       case 'c':
-         for (c = 0; c < NUM_ROWS; ++c)
+         for (c = 0U; c < NUM_ROWS; ++c)
           {
             cell = lookupCell(c_col, c);
             cell->use = CELL_UNUSED;
@@ -704,7 +720,7 @@ byte interpretCommand (byte command)
        {
       case 'U':
       case 'u':
-         swapAndClear(c_col, c_row);
+         swapOutAndClear(c_col, c_row);
          break;
       case 'O':
       case 'o':
@@ -723,7 +739,7 @@ byte interpretCommand (byte command)
          cell = lookupCell(0U, c_row);
          memcpy(cell + (NUM_COLS * (NUM_ROWS - c_row)), cell, sizeof(struct CELL_ENTRY) * NUM_COLS);
          memmove(cell, cell + NUM_COLS, sizeof(struct CELL_ENTRY) * NUM_COLS * (NUM_ROWS - c_row));
-         cell += (NUM_COLS * (NUM_ROWS - c_row - 1));
+         cell += (NUM_COLS * (NUM_ROWS - c_row - 1U));
          for (c = 0; c < NUM_COLS; ++c)
           {
             cell->use = CELL_UNUSED;
@@ -734,7 +750,90 @@ byte interpretCommand (byte command)
       case 'c':
          for (c = 0; c < NUM_ROWS; ++c)
           {
-            swapAndClear(c_col, c);
+            swapOutAndClear(c_col, c);
+          }
+         memmove(widths + c_col, widths + c_col + 1U, NUM_COLS - c_col - 1U);
+         widths[NUM_COLS - 1U] = DEF_WIDTH;
+         break;
+       }
+      redrawEverything = 1U;
+      recalculate(c_major, top_down, left_right);
+      break;
+   case 'I':
+   case 'i':
+      t = platformGetch();
+      switch (t)
+       {
+      case 'I':
+      case 'i':
+         swapInAndClear(c_col, c_row);
+         break;
+      case 'R':
+      case 'r':
+         cell = lookupCell(0U, c_row);
+         memmove(cell + NUM_COLS, cell, sizeof(struct CELL_ENTRY) * NUM_COLS * (NUM_ROWS - c_row));
+         memcpy(cell, cell + (NUM_COLS * (NUM_ROWS - c_row)), sizeof(struct CELL_ENTRY) * NUM_COLS);
+         for (c = 0; c < NUM_COLS; ++c)
+          {
+            cell->use = CELL_UNUSED;
+            ++cell;
+          }
+         break;
+      case 'C':
+      case 'c':
+         for (c = 0U; c < NUM_ROWS; ++c)
+          {
+            swapInAndClear(c_col, c);
+          }
+         memmove(widths + c_col + 1U, widths + c_col, NUM_COLS - c_col - 1U);
+         widths[c_col] = DEF_WIDTH;
+         break;
+       }
+      redrawEverything = 1U;
+      recalculate(c_major, top_down, left_right);
+      break;
+   case 'O':
+   case 'o':
+      t = platformGetch();
+      switch (t)
+       {
+      case 'O':
+      case 'o':
+         cell = lookupCell(c_col, NUM_ROWS - 1U);
+         toSave = cell->loc;
+         for (c = (NUM_ROWS - 1U); c > c_row; --c)
+          {
+            cell->use = (cell - NUM_COLS)->use;
+            cell->loc = (cell - NUM_COLS)->loc;
+            cell -= NUM_COLS;
+          }
+         cell->loc = toSave;
+         cell->use = CELL_UNUSED;
+         break;
+      case 'R':
+      case 'r':
+         if (NUM_ROWS != (c_row + 1U))
+          {
+            cell = lookupCell(0U, c_row + 1U);
+            memmove(cell + NUM_COLS, cell, sizeof(struct CELL_ENTRY) * NUM_COLS * (NUM_ROWS - c_row - 1U));
+            memcpy(cell, cell + (NUM_COLS * (NUM_ROWS - c_row - 1U)), sizeof(struct CELL_ENTRY) * NUM_COLS);
+            for (c = 0; c < NUM_COLS; ++c)
+             {
+               cell->use = CELL_UNUSED;
+               ++cell;
+             }
+          }
+         break;
+      case 'C':
+      case 'c':
+         if (NUM_COLS != (c_col + 1U))
+          {
+            for (c = 0; c < NUM_ROWS; ++c)
+             {
+               swapInAndClear(c_col + 1U, c);
+             }
+            memmove(widths + c_col + 2U, widths + c_col + 1U, NUM_COLS - c_col - 2U);
+            widths[c_col + 1U] = DEF_WIDTH;
           }
          break;
        }
