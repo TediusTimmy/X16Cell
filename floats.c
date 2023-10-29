@@ -34,16 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 
 
-#define CUTOFF   8
+#define CUTOFF  12
 #define MAX_EXP 50
 
-typedef byte add_buffer [5]; // One more than in float.
-typedef byte mul_buffer [8]; // Twice the size of a float.
+typedef byte add_buffer [DIGIT_BYTES + 1U]; // One more than in float.
+typedef byte mul_buffer [DIGIT_BYTES * 2U]; // Twice the size of a float.
 
 static void add_bufcpy(add_buffer dest, const x_float src)
  {
    dest[0] = 0;
-   memmove(&dest[1], &src[2], 4U);
+   memmove(&dest[1], &src[2], DIGIT_BYTES);
  }
 
 #define add_lshift(x) gen_shl((x), 1U, sizeof(add_buffer))
@@ -133,43 +133,47 @@ static void gen_doadd(add_buffer dest, const add_buffer lhd, add_buffer rhd, sma
 
 static void add_dosub(add_buffer dest, const add_buffer lhd, add_buffer rhd)
  {
+      // NOTA BENE : change if DIGIT_BYTES changes
    rhd[0] = 0x99 - rhd[0];
    rhd[1] = 0x99 - rhd[1];
    rhd[2] = 0x99 - rhd[2];
    rhd[3] = 0x99 - rhd[3];
    rhd[4] = 0x99 - rhd[4];
+   rhd[5] = 0x99 - rhd[5];
+   rhd[6] = 0x99 - rhd[6];
    add_doadd(dest, lhd, rhd, 1);
  }
 
 static int add_iszero(const add_buffer lhd)
  {
-   static const char * const test = "\0\0\0\0\0";
+      // NOTA BENE : change if DIGIT_BYTES changes
+   static const char * const test = "\0\0\0\0\0\0\0";
    return memcmp(lhd, test, sizeof(add_buffer)) == 0;
  }
 
 static void set_to_special(x_float dest, byte special)
  {
-   memset(dest, '\0', 6);
+   memset(dest, '\0', FLOAT_BYTES);
    dest[0] = 0x80;
    dest[1] = special;
  }
 
 static void set_digits_to_zero(x_float dest, small digits)
  {
-   small start = 1 + 4 - (digits >> 1);
+   small start = 1 + DIGIT_BYTES - (digits >> 1);
    if (digits & 1)
     {
       dest[start] = dest[start] & 0xF0;
     }
    ++start;
-   while (start < 6)
+   while (start < ((small)FLOAT_BYTES))
     {
       dest[start] = 0;
       ++start;
     }
  }
 
-static byte placeDigits (char dest [15], const x_float src, byte digits, byte place, byte put_separator)
+static byte placeDigits (char dest [STRING_BUF], const x_float src, byte digits, byte place, byte put_separator)
  {
    byte digit = 3;
    dest[place] = (src[2] >> 4) + '0';
@@ -202,7 +206,7 @@ static byte placeDigits (char dest [15], const x_float src, byte digits, byte pl
    return place;
  }
 
-static void placeExponent (char dest [15], small exponent, byte place)
+static void placeExponent (char dest [STRING_BUF], small exponent, byte place)
  {
    small digit = 0;
    small check = 0;
@@ -506,11 +510,11 @@ void float_trunc (x_float arg)
       set_to_special(arg, 0);
       return;
     }
-   if (ARG->exponent > 6) // Nothing to change.
+   if (ARG->exponent > (small)(DIGIT_BYTES * 2U - 2U)) // Nothing to change.
     {
       return;
     }
-   digits = 7 - ARG->exponent; // Digits to remove.
+   digits = (DIGIT_BYTES * 2U - 1U) - ARG->exponent; // Digits to remove.
    set_digits_to_zero(arg, digits);
  }
 
@@ -548,9 +552,9 @@ void float_round (x_float arg)
        }
       return;
     }
-   digits = 7 - ARG->exponent; // Digits to remove.
+   digits = (DIGIT_BYTES * 2U - 1U) - ARG->exponent; // Digits to remove.
    carryin = 0;
-   digit = 1 + 4 - (digits >> 1);
+   digit = 1 + DIGIT_BYTES - (digits >> 1);
    if (digits & 1)
     {
       carryin = (arg[digit] & 0xF) > 4;
@@ -737,7 +741,7 @@ void float_add (x_float dest, const x_float lhs, const x_float rhs)
        {
          resExp = -128;
          resSign = -128;
-         memset(&lhd[1], '\0', 4U);
+         memset(&lhd[1], '\0', DIGIT_BYTES);
        }
     }
    else
@@ -755,11 +759,11 @@ void float_add (x_float dest, const x_float lhs, const x_float rhs)
        {
          resExp = -128;
          resSign = 0;
-         memset(&lhd[1], '\0', 4U);
+         memset(&lhd[1], '\0', DIGIT_BYTES);
        }
     }
 
-   memmove(&dest[2], &lhd[1], 4U);
+   memmove(&dest[2], &lhd[1], DIGIT_BYTES);
    DEST->sign = resSign;
    DEST->exponent = resExp;
  }
@@ -905,22 +909,22 @@ void float_div (x_float dest, const x_float lhs, const x_float rhs)
       The quotient is developed by repeated addition of the ten's complement of the divisor.
       The dividend is transformed into the quotient: only one register (variable) is used.
    */
-   memset(sum, '\0', 8);
-   memset(addend, '\0', 8);
+   memset(sum, '\0', sizeof(mul_buffer));
+   memset(addend, '\0', sizeof(mul_buffer));
 
-   memcpy(&addend[4], &rhs[2], sizeof(x_float) - 2U);
-   for (count = 4; count < 8; ++count)
+   memcpy(&addend[DIGIT_BYTES], &rhs[2], sizeof(x_float) - 2U);
+   for (count = DIGIT_BYTES; count < sizeof(mul_buffer); ++count)
     {
       addend[count] = 0x99 - addend[count];
     }
-   sum[7] = 1;
+   sum[sizeof(mul_buffer) - 1U] = 1;
    mul_doadd(addend, sum);
-   memcpy(&sum[4], &lhs[2], sizeof(x_float) - 2U);
+   memcpy(&sum[DIGIT_BYTES], &lhs[2], sizeof(x_float) - 2U);
    
-   mul_shl(addend, 7);
-   mul_shl(sum, 7 + times);
+   mul_shl(addend, sizeof(mul_buffer) - 1U);
+   mul_shl(sum, sizeof(mul_buffer) - 1U + times);
 
-   for (count = 0; count < 4; ++count)
+   for (count = 0; count < DIGIT_BYTES; ++count)
     {
       if (sum[count] >> 4) // I don't get this step.
        {
@@ -981,7 +985,7 @@ const char* float_from_str (x_float dest, const char* src)
          if (realDigit || ('0' != *src))
           {
             add_lshift(&dest[1]);
-            dest[5] |= *src - '0';
+            dest[sizeof(x_float) - 1U] |= *src - '0';
             realDigit = 1;
             ++digits;
           }
@@ -1003,7 +1007,7 @@ const char* float_from_str (x_float dest, const char* src)
          if (realDigit || ('0' != *src))
           {
             add_lshift(&dest[1]);
-            dest[5] |= *src - '0';
+            dest[sizeof(x_float) - 1U] |= *src - '0';
             realDigit = 1;
             ++digits;
           }
@@ -1076,11 +1080,11 @@ const char* float_from_str (x_float dest, const char* src)
    return src;
  }
 
-void float_to_str (char dest [15], const x_float src)
+void float_to_str (char dest [STRING_BUF], const x_float src)
  {
    x_float_impl* SRC = (x_float_impl*)src;
    byte trailing_zeros = 0;
-   byte place = 5;
+   byte place = sizeof(x_float) - 1U;
    small mover;
    memset(dest, '\0', 15U);
       // Remove special cases.

@@ -52,7 +52,7 @@ static byte left_right;
 static byte inputMode;
 static byte useComma;
 
-static char tempFloat [15];
+static char tempFloat [STRING_BUF];
 static char working [CELL_STR_LEN];
 static byte lChar, inLoc, totLen;
 
@@ -523,7 +523,7 @@ byte interpretCommand (byte command)
       totLen = 0;
       inputMode = 1;
       string += CELL_STR_LEN;
-      memset(string, '\0', 6);
+      memset(string, '\0', FLOAT_BYTES);
       *string = -128;
       break;
    case 'E':

@@ -38,9 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CELL_USE_LABEL 1
 #define CELL_USE_VALUE 2
 
-   // I know the math doesn't add up here.
-#define CELL_MAX_LEN 120U
-#define CELL_STR_LEN 122U
+#define CELL_MAX_LEN 119U
+#define CELL_STR_LEN 120U
 
 typedef struct CELL_ENTRY* centry;
 

@@ -374,7 +374,7 @@ const char* shuntingYard (x_float dest, const char* src, byte inAFunk)
                 }
                else
                 {
-                  memset(*sy_dsp, '\0', 6);
+                  memset(*sy_dsp, '\0', FLOAT_BYTES);
                   *sy_dsp[0] = 0x80;
                 }
              }
@@ -421,7 +421,7 @@ const char* shuntingYard (x_float dest, const char* src, byte inAFunk)
 
    if (sy_dsp == d_entered)
     {
-      memset(dest, '\0', 6);
+      memset(dest, '\0', FLOAT_BYTES);
       dest[0] = 0x80;
       dest[1] = 0x80;
     }
@@ -436,7 +436,7 @@ const char* shuntingYard (x_float dest, const char* src, byte inAFunk)
     {
       sy_dsp = d_entered;
       sy_osp = o_entered;
-      memset(dest, '\0', 6);
+      memset(dest, '\0', FLOAT_BYTES);
       dest[0] = 0x80;
       dest[1] = 0x80;
       src = NULL;
@@ -660,13 +660,13 @@ byte function_max (x_float dest, const char** src)
    return generic_min_max(dest, src, float_max);
  }
 
-static const byte* ONE = (const byte*)"\0\0\20\0\0\0\0";
+static const byte* ONE = (const byte*)"\0\0\20\0\0\0\0\0\0";
 byte generic_average (x_float sum, x_float count, const char** src)
  {
    byte fail = 0;
    const char* temp = *src;
    byte c, r;
-   memset(sum, '\0', 6);
+   memset(sum, '\0', FLOAT_BYTES);
    sum[0] = 0x80;
    float_cpy(count, sum);
    if ('(' == *temp)

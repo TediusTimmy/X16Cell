@@ -34,13 +34,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "machina.h"
 
-typedef byte x_float [6];
+#define FLOAT_BYTES 8U
+#define DIGIT_BYTES 6U
+
+#define STRING_BUF 19U
+
+typedef byte x_float [FLOAT_BYTES];
 
 typedef struct
  {
    small exponent;
    small sign;
-   byte digits [4];
+   byte digits [DIGIT_BYTES];
  } x_float_impl;
 
 void float_cpy (x_float dest, const x_float src);
@@ -59,6 +64,6 @@ void float_mul (x_float dest, const x_float lhs, const x_float rhs);
 void float_div (x_float dest, const x_float lhs, const x_float rhs);
 
 const char* float_from_str (x_float dest, const char* src);
-void float_to_str (char dest [15], const x_float src);
+void float_to_str (char dest [STRING_BUF], const x_float src);
 
 #endif /* FLOATS_H */

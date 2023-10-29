@@ -459,7 +459,7 @@ void testFromString (void)
 // < -11 : Scientific, remove trailing zeros and separator (if applicable)
 void testToString (void) // -9.9999999e+99 = 15 byte buffer
  {
-   char temp [15];
+   char temp [STRING_BUF];
    x_float a;
 
    setFloat(a, -128, 0, 0, 0, 0, 0);
