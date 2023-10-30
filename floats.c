@@ -1132,18 +1132,18 @@ void float_to_str (char dest [STRING_BUF], const x_float src)
       dest[0] = '-';
       ++place;
     }
-   if (SRC->exponent > 7)
+   if (SRC->exponent > (small)(DIGIT_BYTES * 2U - 1U))
     {
       place = placeDigits(dest, src, CUTOFF - trailing_zeros, place, 1);
       placeExponent(dest, SRC->exponent, place);
     }
-   else if (SRC->exponent == 7)
+   else if (SRC->exponent == (DIGIT_BYTES * 2U - 1U))
     {
       placeDigits(dest, src, CUTOFF, place, 0);
     }
-   else if (SRC->exponent == 6)
+   else if (SRC->exponent == (DIGIT_BYTES * 2U - 2U))
     {
-      place = placeDigits(dest, src, 7, place, 0);
+      place = placeDigits(dest, src, (DIGIT_BYTES * 2U - 1U), place, 0);
       if (0 == trailing_zeros)
        {
          dest[place] = '.';
