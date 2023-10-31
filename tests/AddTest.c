@@ -59,6 +59,8 @@ void setFloat (x_float x, small exponent, small sign, byte digit1, byte digit2, 
    x[3] = digit2;
    x[4] = digit3;
    x[5] = digit4;
+   x[6] = 0U;
+   x[7] = 0U;
  }
 
 
