@@ -377,6 +377,13 @@ void testTruncRound (void)
 
    ASSERT_EQ(b, a); // Err in, Err out.
 
+   setFloat(a, 11, 0, 0x11, 0x11, 0x11, 0x11);
+   setFloat(b, 11, 0, 0x11, 0x11, 0x11, 0x11);
+
+   float_trunc(a);
+
+   ASSERT_EQ(b, a); // No change.
+
 
 
    setFloat(a, 0, 0, 0x10, 0, 0, 0);

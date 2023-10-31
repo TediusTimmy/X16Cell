@@ -1086,7 +1086,7 @@ void float_to_str (char dest [STRING_BUF], const x_float src)
    byte trailing_zeros = 0;
    byte place = sizeof(x_float) - 1U;
    small mover;
-   memset(dest, '\0', 15U);
+   memset(dest, '\0', STRING_BUF);
       // Remove special cases.
    if (src[0] == 0x80)
     {
@@ -1148,7 +1148,7 @@ void float_to_str (char dest [STRING_BUF], const x_float src)
        {
          dest[place] = '.';
          ++place;
-         dest[place] = (src[5] & 0xF) + '0';
+         dest[place] = (src[sizeof(x_float) - 1U] & 0xF) + '0';
        }
     }
    else if (SRC->exponent > -1)

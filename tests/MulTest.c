@@ -65,6 +65,18 @@ void setFloat (x_float x, small exponent, small sign, byte digit1, byte digit2, 
    x[5] = digit4;
  }
 
+void setFloat2 (x_float x, small exponent, small sign, byte digit1, byte digit2, byte digit3, byte digit4, byte digit5, byte digit6)
+ {
+   x[0] = (byte)exponent;
+   x[1] = (byte)sign;
+   x[2] = digit1;
+   x[3] = digit2;
+   x[4] = digit3;
+   x[5] = digit4;
+   x[6] = digit5;
+   x[7] = digit6;
+ }
+
 
 void testMuls (void)
  {
@@ -351,19 +363,19 @@ void testFromString (void)
    float_from_str(a, "12345678");
    ASSERT_EQ(b, a);
 
-   setFloat(b, 8, 0, 0x12, 0x34, 0x56, 0x78);
-   float_from_str(a, "123456789");
+   setFloat2(b, 12, 0, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
+   float_from_str(a, "1234567890123");
    ASSERT_EQ(b, a);
 
-   setFloat(b, 0, 0, 0x12, 0x34, 0x56, 0x78);
+   setFloat2(b, 0, 0, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00);
    float_from_str(a, "1.2345678");
    ASSERT_EQ(b, a);
 
-   setFloat(b, 0, 0, 0x12, 0x34, 0x56, 0x78);
-   float_from_str(a, "1,23456789");
+   setFloat2(b, 0, 0, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
+   float_from_str(a, "1,234567890123");
    ASSERT_EQ(b, a);
 
-   setFloat(b, -10, 0, 0x50, 0, 0, 0);
+   setFloat2(b, -10, 0, 0x50, 0, 0, 0, 0, 0);
    float_from_str(a, "5e-10");
    ASSERT_EQ(b, a);
 
@@ -457,7 +469,7 @@ void testFromString (void)
 // -5 - -11 : If we can remove enough trailing zeros so that the negative number is 14 characters, full number.
 //    Else, scientific, remove trailing zeros and separator (if applicable)
 // < -11 : Scientific, remove trailing zeros and separator (if applicable)
-void testToString (void) // -9.9999999e+99 = 15 byte buffer
+void testToString (void) // -9.99999999999e+99 = 19 byte buffer
  {
    char temp [STRING_BUF];
    x_float a;
@@ -486,15 +498,15 @@ void testToString (void) // -9.9999999e+99 = 15 byte buffer
    float_to_str(temp, a);
    ASSERT_TRUE(0 == strcmp("1.2345678e-19", temp));
 
-   setFloat(a, 9, -128, 0x12, 0x34, 0x56, 0x78);
+   setFloat2(a, 13, -128, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("-1234567800.00", temp)); // Can do this, but don't want imaginary precision
+   ASSERT_TRUE(0 == strcmp("-1.23456789012e+13", temp)); // Can do this, but don't want imaginary precision
 
-   setFloat(a, 7, 0, 0x12, 0x34, 0x56, 0x78);
+   setFloat2(a, 11, 0, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("12345678.00", temp)); // Cutoff is 7 due to underlying data.
+   ASSERT_TRUE(0 == strcmp("123456789012", temp)); // Cutoff is 11 due to underlying data.
 
-   setFloat(a, -9, 0, 0x12, 0x34, 0x56, 0x78);
+   setFloat2(a, -9, 0, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00);
    float_to_str(temp, a);
    ASSERT_TRUE(0 == strcmp("1.2345678e-9", temp));
 
@@ -510,21 +522,21 @@ void testToString (void) // -9.9999999e+99 = 15 byte buffer
    float_to_str(temp, a);
    ASSERT_TRUE(0 == strcmp("0.000012345678", temp));
 
-   setFloat(a, -4, -128, 0x12, 0x34, 0x56, 0x78);
+   setFloat2(a, -4, -128, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("-0.00012345678", temp)); // Cutoff is -4 due to this case.
+   ASSERT_TRUE(0 == strcmp("-0.000123456789012", temp)); // Cutoff is -4 due to this case.
 
-   setFloat(a, -5, -128, 0x12, 0x34, 0x56, 0x78);
+   setFloat2(a, -5, -128, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("-0.000012345678", temp));
+   ASSERT_TRUE(0 == strcmp("-1.23456789012e-5", temp));
 
-   setFloat(a, 3, 0, 0x10, 0x00, 0x00, 0x00);
+   setFloat2(a, 3, 0, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00);
    float_to_str(temp, a);
    ASSERT_TRUE(0 == strcmp("1000.00", temp));
 
-   setFloat(a, 9, 0, 0x10, 0x00, 0x00, 0x00);
+   setFloat(a, 13, 0, 0x10, 0x00, 0x00, 0x00);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("1000000000.00", temp));
+   ASSERT_TRUE(0 == strcmp("1e+13", temp));
 
    setFloat(a, 3, 0, 0x12, 0x34, 0x56, 0x00);
    float_to_str(temp, a);
@@ -542,17 +554,17 @@ void testToString (void) // -9.9999999e+99 = 15 byte buffer
    float_to_str(temp, a);
    ASSERT_TRUE(0 == strcmp("500000.00", temp));
 
-   setFloat(a, 6, 0, 0x50, 0x00, 0x00, 0x00);
+   setFloat2(a, 10, 0, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("5000000.00", temp));
+   ASSERT_TRUE(0 == strcmp("50000000000", temp));
 
-   setFloat(a, 6, 0, 0x50, 0x00, 0x00, 0x01);
+   setFloat2(a, 10, 0, 0x50, 0x00, 0x00, 0x00, 0x00, 0x01);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("5000000.10", temp));
+   ASSERT_TRUE(0 == strcmp("50000000000.1", temp));
 
-   setFloat(a, 7, 0, 0x50, 0x00, 0x00, 0x00);
+   setFloat2(a, 11, 0, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00);
    float_to_str(temp, a);
-   ASSERT_TRUE(0 == strcmp("50000000.00", temp));
+   ASSERT_TRUE(0 == strcmp("500000000000", temp));
 
    setFloat(a, -1, 0, 0x50, 0x00, 0x00, 0x00);
    float_to_str(temp, a);
