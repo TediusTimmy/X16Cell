@@ -809,9 +809,9 @@ void float_mul (x_float dest, const x_float lhs, const x_float rhs)
     }
 
    // Perform a multiply
-   memset(sum, '\0', 8);
+   memset(sum, '\0', sizeof(mul_buffer));
    curr = 0;
-   for (digit = 5; digit > 1; --digit)
+   for (digit = sizeof(x_float) - 1U; digit > 1; --digit)
     {
       byte mb = rhs[digit];
       byte mhn = mb >> 4;
@@ -819,18 +819,18 @@ void float_mul (x_float dest, const x_float lhs, const x_float rhs)
 
       if (0U != mln)
        {
-         memset(addend, '\0', 4);
-         memcpy(&addend[4], &lhs[2], sizeof(x_float) - 2U);
-         mul_mulByDigit(addend + 3, mln);
+         memset(addend, '\0', sizeof(x_float) - 2U);
+         memcpy(&addend[sizeof(x_float) - 2U], &lhs[2], sizeof(x_float) - 2U);
+         mul_mulByDigit(addend + sizeof(x_float) - 3U, mln);
          mul_shl(addend, curr);
          mul_doadd(sum, addend);
        }
       ++curr;
       if (0U != mhn)
        {
-         memset(addend, '\0', 4);
-         memcpy(&addend[4], &lhs[2], sizeof(x_float) - 2U);
-         mul_mulByDigit(addend + 3, mhn);
+         memset(addend, '\0', sizeof(x_float) - 2U);
+         memcpy(&addend[sizeof(x_float) - 2U], &lhs[2], sizeof(x_float) - 2U);
+         mul_mulByDigit(addend + sizeof(x_float) - 3U, mhn);
          mul_shl(addend, curr);
          mul_doadd(sum, addend);
        }
