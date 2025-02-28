@@ -131,7 +131,7 @@ static void gen_doadd(add_buffer dest, const add_buffer lhd, add_buffer rhd, sma
     }
  }
 
-static void add_dosub(add_buffer dest, const add_buffer lhd, add_buffer rhd)
+static void add_dosub(add_buffer dest, const add_buffer lhd, add_buffer rhd, byte carry)
  {
       // NOTA BENE : change if DIGIT_BYTES changes
    rhd[0] = 0x99 - rhd[0];
@@ -141,7 +141,7 @@ static void add_dosub(add_buffer dest, const add_buffer lhd, add_buffer rhd)
    rhd[4] = 0x99 - rhd[4];
    rhd[5] = 0x99 - rhd[5];
    rhd[6] = 0x99 - rhd[6];
-   add_doadd(dest, lhd, rhd, 1);
+   add_doadd(dest, lhd, rhd, carry);
  }
 
 static int add_iszero(const add_buffer lhd)
@@ -626,6 +626,7 @@ void float_add (x_float dest, const x_float lhs, const x_float rhs)
    x_float_impl* RHS = (x_float_impl*)rhs;
    small resExp, resSign, expDiff;
    add_buffer lhd, rhd; // Declare temp buffers.
+   byte carry = 1;
 
    if (LHS->exponent == -128) // Is the lhs zero?
     {
@@ -669,6 +670,15 @@ void float_add (x_float dest, const x_float lhs, const x_float rhs)
           }
          add_lshift(lhd);
        }
+      else if (LHS->sign != RHS->sign)
+       {
+         add_bufcpy(lhd, lhs);
+         add_bufcpy(rhd, rhs);
+         add_rshift(rhd, CUTOFF);
+         add_lshift(lhd);
+         carry = 0;
+         expDiff = 1; // Decrement exponent if we rolled down
+       }
       else
        {
          float_cpy(dest, lhs); // Result won't change
@@ -689,6 +699,15 @@ void float_add (x_float dest, const x_float lhs, const x_float rhs)
             expDiff = 1;
           }
          add_lshift(rhd);
+       }
+      else if (LHS->sign != RHS->sign)
+       {
+         add_bufcpy(lhd, lhs);
+         add_bufcpy(rhd, rhs);
+         add_rshift(lhd, CUTOFF);
+         add_lshift(rhd);
+         carry = 0;
+         expDiff = 1; // Decrement exponent if we rolled down
        }
       else
        {
@@ -711,11 +730,11 @@ void float_add (x_float dest, const x_float lhs, const x_float rhs)
     {
       if (memcmp(lhd, rhd, sizeof(add_buffer)) >= 0)
        {
-         add_dosub(lhd, lhd, rhd);
+         add_dosub(lhd, lhd, rhd, carry);
        }
       else
        {
-         add_dosub(lhd, rhd, lhd);
+         add_dosub(lhd, rhd, lhd, carry);
          resSign ^= -128;
        }
     }

@@ -272,11 +272,13 @@ void testAdds (void)
 
 
    setFloat(a, 13, 0, 0x10, 0, 0, 0);
+   setFloat(c, 12, 0, 0x99, 0x99, 0x99, 0x99);
 
-   float_add(t, a, b); // 1000000000 - 1 = 1000000000
-   ASSERT_EQ(a, t);
-   float_add(t, b, a); // -1 + 1000000000 = 1000000000
-   ASSERT_EQ(a, t);
+      // Rounding to zero means that we always round this operation down.
+   float_add(t, a, b); // 1000000000 - 1 = 99999999
+   ASSERT_EQ(c, t);
+   float_add(t, b, a); // -1 + 1000000000 = 99999999
+   ASSERT_EQ(c, t);
 
 
    setFloat(a, 1, -128, 0x10, 0, 0, 0);
