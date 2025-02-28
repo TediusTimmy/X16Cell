@@ -474,6 +474,15 @@ void testAdds (void)
 
    float_add(t, a, b); // 10000200 - 10000100 = 100
    ASSERT_EQ(c, t);
+
+   setFloat(a, 15, 0, 0x10, 0, 0, 0);
+   setFloat(b, 0, 0, 0x10, 0, 0, 0);
+   setFloat(c, 15, 0, 0x10, 0, 0, 0);
+
+   float_add(t, a, b); // 1000000000000000 + 1 = 1000000000000000
+   ASSERT_EQ(c, t);
+   float_add(t, b, a); // 1 + 1000000000000000 = 1000000000000000
+   ASSERT_EQ(c, t);
  }
 
 
