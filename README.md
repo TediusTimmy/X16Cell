@@ -17,7 +17,7 @@ I do want to point out that the division algorithm in use is the one outlined fo
 Limits
 ------
 
-There are 100 rows (0 to 99) and twenty-six columns (A - Z, this is an update that will make old save files load funny). Each cell can have 120 bytes of data in it: the string representation of the cell can be a maximum of 120 bytes. Cell calculation follows the recalculation strategy and will gladly use stale values if that cell hasn't been recomputed yet (and it doesn't do the "normal spreadsheet" thing of doing multiple passes).  
+There are 100 rows (0 to 99) and twenty-six columns (A - Z, this is an update that will make old save files load funny). Each cell can have 119 bytes of data in it: the string representation of the cell can be a maximum of 119 bytes (this is one byte less than the earlier version). Cell calculation follows the recalculation strategy and will gladly use stale values if that cell hasn't been recomputed yet (and it doesn't do the "normal spreadsheet" thing of doing multiple passes).  
 The formula evaluation engine has two stacks: one for data and one for operations. The data stack is fifteen values deep, and the operation stack is thirty one values deep. If I understand the manual correctly, these stacks are larger than a late 90's budget graphing calculator.
 
 
